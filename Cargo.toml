@@ -1,0 +1,12 @@
+[package]
+name = "quilt_chip8"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quilt = { git = "https://github.com/nathanielfernandes/quilt.git" }
+macroquad = "0.4.4"
+futures = "0.3.28"
+# getrandom = { version = "*", features = ["js"] }
