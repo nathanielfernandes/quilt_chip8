@@ -19,7 +19,6 @@ fn exec_opcode(opcode) {
 
     let task, val = switch [i, x, y, n] {
         case [0x00, 0x00, 0x00, 0x00] { JUMP(pc) }
-
         case [0x00, 0x00, 0x0E, 0x00] { _00E0() } // clear screen
         case [0x00, 0x00, 0x0E, 0x0E] { _00EE() } // return from subroutine
 
@@ -149,21 +148,22 @@ fn _ANNN(nnn) {
 
 // display draw
 fn _DXYN(x, y, n) {
-    let x = v[x] % 64
+    let xx = v[x] % 64
     let y = v[y] % 32
 
-    @set(v, 0x0F, 0x00)
+    // this one line was incorrect and i spent
+    // 2 hours debugging it
+    v = @set(v, 0x0F, 0x00)
 
     for b in 0 : n {
         let sprite_data = @memget(i + b)
-        let x = x
-        for i in 0 : 8 {
-            i = 7 - i
+        let x = xx
+        for j in 0 : 8 {
+            j = 7 - j
 
-            if ((sprite_data >> i) & 0x01) == 0x01 {
+            if ((sprite_data >> j) & 0x01) != 0x00 {
                 let prev = @display_get(x, y)
                 @display_set(x, y, !prev)
-
                 if prev {
                     v = @set(v, 0x0F, 0x01)
                 }
@@ -235,10 +235,7 @@ fn _8XY3(x, y) {
 
 // set vx to vx + vy
 fn _8XY4(x, y) {
-    let source = v[y]
-    let target = v[x]
-
-    let sum, carry = overflowing_add(source, target)
+    let sum, carry = overflowing_add(v[x], v[y])
     v = @set(v, x, sum)
     v = @set(v, 0x0F, carry)
 
@@ -247,10 +244,7 @@ fn _8XY4(x, y) {
 
 // set vx to vx - vy
 fn _8XY5(x, y) {
-    let source = v[y]
-    let target = v[x]
-
-    let diff, borrow = overflowing_sub(target, source)
+    let diff, borrow = overflowing_sub(v[x], v[y])
     v = @set(v, x, diff)
     v = @set(v, 0x0F, borrow)
 
@@ -323,7 +317,9 @@ fn _FX18(x) {
 
 // add vx to i
 fn _FX1E(x) {
-    i += v[x]
+    i += v[x] 
+    let carry = (if i > 0x0FFF { 1 } else { 0 })
+    v = @set(v, 0x0F, carry)
     NEXT()
 }
 

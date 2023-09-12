@@ -1,6 +1,8 @@
 mod display;
+mod keypad;
 
 use display::*;
+use keypad::*;
 
 use macroquad::prelude::*;
 pub use quilt::prelude::*;
@@ -43,11 +45,11 @@ specific_builtins! {
     }
 
     fn @getkey(_ctx,) {
-        Value::None
+        get_key().into()
     }
 
-    fn @keydown(_ctx, _key: any) {
-        false.into()
+    fn @keydown(_ctx, key: u8) {
+        kp_is_key_down(key).into()
     }
 
     fn @display_set(_ctx, x: u8, y: u8, b: bool) {
@@ -62,6 +64,10 @@ specific_builtins! {
     fn @display_clear(_ctx,) {
         Display::clear();
         Value::None
+    }
+
+    fn @get_fps(_ctx,) {
+        Display::get_fps().into()
     }
 }
 
@@ -81,8 +87,13 @@ async fn main() {
     let mut display = Display::new();
 
     loop {
+        update_keypad();
+
+        display.update();
+
         clear_background(BLACK);
         display.draw();
+
         next_frame().await
     }
 }
@@ -93,7 +104,7 @@ fn run_quilt() {
     let mut sources = SourceCache::new();
 
     let ast = match sources.parse_with_includes(
-        "main.ql",
+        "chip8/main.ql",
         &src,
         &mut DefaultIncludeResolver::default(),
     ) {
@@ -111,6 +122,11 @@ fn run_quilt() {
             return;
         }
     };
+
+    // let dis = Disassembler::new(&script, &sources);
+    // for func in dis.disassemble() {
+    //     println!("{}", func);
+    // }
 
     let state = Context { memory: [0; 4096] };
 

@@ -1,9 +1,10 @@
 use macroquad::prelude::*;
 
 use once_cell::sync::Lazy;
-use std::sync::RwLock;
+use std::sync::{atomic::AtomicI32, RwLock};
 
 pub static GFXBUFFER: Lazy<RwLock<[bool; 64 * 32]>> = Lazy::new(|| RwLock::new([false; 64 * 32]));
+pub static FPS: AtomicI32 = AtomicI32::new(0);
 // pub const CLEAR: [bool; 64 * 32] = [false; 64 * 32];
 
 pub struct Display {
@@ -57,6 +58,16 @@ impl Display {
     }
 
     #[inline(always)]
+    pub fn update_fps() {
+        FPS.store(get_fps(), std::sync::atomic::Ordering::Relaxed);
+    }
+
+    #[inline(always)]
+    pub fn get_fps() -> f32 {
+        FPS.load(std::sync::atomic::Ordering::Relaxed) as f32
+    }
+
+    #[inline(always)]
     pub fn set(x: u8, y: u8, b: bool) {
         GFXBUFFER.write().expect("Failed to write GFXBUFFER")[Self::i(x, y)] = b;
     }
@@ -74,9 +85,12 @@ impl Display {
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn update(&mut self) {
+        Self::update_fps();
         self.update_screen_size();
+    }
 
+    pub fn draw(&self) {
         let buffer = GFXBUFFER.read().expect("Failed to read GFXBUFFER");
         for y in 0..Self::HEIGHT {
             for x in 0..Self::WIDTH {

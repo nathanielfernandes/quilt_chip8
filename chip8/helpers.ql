@@ -6,7 +6,7 @@ fn overflowing_add(a, b) {
 
 fn overflowing_sub(a, b) {
     let diff = a - b
-    let borrow = (if b > a { 0 } else { 1 })
+    let borrow = (if a > b { 1 } else { 0 })
     (diff & 255, borrow)
 }
 

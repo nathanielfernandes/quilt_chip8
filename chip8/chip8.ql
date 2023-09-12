@@ -58,7 +58,7 @@ fn cycle() {
 }
 
 fn sync_cycle(fps) {
-    for _ in 0 : ((hz / @max(fps, 1))) {
+    for _ in 0 : @round(hz / @max(fps, 1)) {
         cycle()
     }
 }
