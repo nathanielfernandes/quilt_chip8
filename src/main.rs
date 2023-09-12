@@ -68,8 +68,8 @@ specific_builtins! {
 fn window_conf() -> Conf {
     Conf {
         window_title: "Chip8".to_owned(),
-        window_width: 1600,
-        window_height: 800,
+        window_width: 800,
+        window_height: 400,
         ..Default::default()
     }
 }

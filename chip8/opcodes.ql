@@ -117,9 +117,6 @@ fn exec_opcode(opcode) {
 }
 
 
-
-
-
 // clear screen
 fn _00E0() {
     @display_clear()
@@ -236,20 +233,27 @@ fn _8XY3(x, y) {
     NEXT()
 }
 
-
 // set vx to vx + vy
 fn _8XY4(x, y) {
-    let sum, carry = overflowing_add(v[x], v[y])
+    let source = v[y]
+    let target = v[x]
+
+    let sum, carry = overflowing_add(source, target)
     v = @set(v, x, sum)
     v = @set(v, 0x0F, carry)
+
     NEXT()
 }
 
 // set vx to vx - vy
 fn _8XY5(x, y) {
-    let diff, borrow = overflowing_sub(v[x], v[y])
+    let source = v[y]
+    let target = v[x]
+
+    let diff, borrow = overflowing_sub(target, source)
     v = @set(v, x, diff)
     v = @set(v, 0x0F, borrow)
+
     NEXT()
 }
 
@@ -258,6 +262,7 @@ fn _8XY7(x, y) {
     let diff, borrow = overflowing_sub(v[y], v[x])
     v = @set(v, x, diff)
     v = @set(v, 0x0F, borrow)
+
     NEXT()
 }
 
@@ -270,8 +275,9 @@ fn _8XY6(x, y) {
 
 // shift vx left by 1
 fn _8XYE(x, y) {
-    v = @set(v, 0x0F, (v[x] & 255) >> 7)
-    v = @set(v, x, v[x] << 1)
+    let msb = (v[x] >> 7) & 0x01
+    v = @set(v, 0x0F, msb)
+    v = @set(v, x, (v[x] << 1) & 255)
     NEXT()
 }
 
@@ -317,9 +323,7 @@ fn _FX18(x) {
 
 // add vx to i
 fn _FX1E(x) {
-    let sum, carry = overflowing_add(i, v[x])
-    i = sum
-    v = @set(v, 0x0F, carry)
+    i += v[x]
     NEXT()
 }
 
@@ -339,20 +343,21 @@ fn _FX29(x) {
 // get each number place and store in memory
 fn _FX33(x) {
     let vx = v[x]
+
     let hundreds = vx / 100
     let tens = (vx / 10) % 10
-    let ones = (vx % 100) % 10
+    let ones = vx % 10
 
     @memset(i, hundreds)
     @memset(i + 1, tens)
     @memset(i + 2, ones)
-
+    
     NEXT()
 }
 
 // store registers to memory
 fn _FX55(x) {
-    for j in 0 : x + 1{
+    for j in 0 : (x + 1) {
         @memset(i + j, v[j])
     }
     NEXT()
@@ -360,7 +365,7 @@ fn _FX55(x) {
 
 // load registers from memory
 fn _FX65(x) {
-    for j in 0 : x + 1{
+    for j in 0 : (x + 1) {
         v = @set(v, j, @memget(i + j))
     }
     NEXT()
