@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 quilt = { git = "https://github.com/nathanielfernandes/quilt.git" }
 macroquad = "0.4.4"
-futures = "0.3.28"
 # getrandom = { version = "*", features = ["js"] }
+once_cell = "1.18.0"

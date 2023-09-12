@@ -52,6 +52,13 @@ fn cycle() {
         }
     } else {
         let opcode = fetch(pc)
+        // @print("executing opcode: ", @hex(opcode))
         exec_opcode(opcode)
+    }
+}
+
+fn sync_cycle(fps) {
+    for _ in 0 : ((hz / @max(fps, 1))) {
+        cycle()
     }
 }

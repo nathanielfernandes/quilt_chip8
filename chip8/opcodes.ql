@@ -50,6 +50,8 @@ fn exec_opcode(opcode) {
                         case 0x06 { _8XY6(x, y) } // shift vx right by 1
                         case 0x07 { _8XY7(x, y) } // set vx to vy - vx
                         case 0x0E { _8XYE(x, y) } // shift vx left by 1
+
+                        default { UNKNOWN(opcode) }
                     }
                 }
 
@@ -70,6 +72,8 @@ fn exec_opcode(opcode) {
                     switch nn {
                         case 0x9E { _EX9E(x) } // skip if key vx down
                         case 0xA1 { _EXA1(x) } // skip if key vx not down
+
+                        default { UNKNOWN(opcode) }
                     }
                 }
 
@@ -84,6 +88,8 @@ fn exec_opcode(opcode) {
                         case 0x33 { _FX33(x) } // get each number place and store in memory
                         case 0x55 { _FX55(x) } // store registers to memory
                         case 0x65 { _FX65(x) } // load registers from memory
+
+                        default { UNKNOWN(opcode) }
                     }
                 }
                 
@@ -146,7 +152,32 @@ fn _ANNN(nnn) {
 
 // display draw
 fn _DXYN(x, y, n) {
-    @assert(false)
+    let x = v[x] % 64
+    let y = v[y] % 32
+
+    @set(v, 0x0F, 0x00)
+
+    for b in 0 : n {
+        let sprite_data = @memget(i + b)
+        let x = x
+        for i in 0 : 8 {
+            i = 7 - i
+
+            if ((sprite_data >> i) & 0x01) == 0x01 {
+                let prev = @display_get(x, y)
+                @display_set(x, y, !prev)
+
+                if prev {
+                    v = @set(v, 0x0F, 0x01)
+                }
+            }
+
+            x += 1
+        }
+        y += 1
+    }
+
+    NEXT()
 }
 
 
@@ -218,7 +249,7 @@ fn _8XY4(x, y) {
 fn _8XY5(x, y) {
     let diff, borrow = overflowing_sub(v[x], v[y])
     v = @set(v, x, diff)
-    v = @set(v, 0x0F, !borrow)
+    v = @set(v, 0x0F, borrow)
     NEXT()
 }
 
@@ -226,7 +257,7 @@ fn _8XY5(x, y) {
 fn _8XY7(x, y) {
     let diff, borrow = overflowing_sub(v[y], v[x])
     v = @set(v, x, diff)
-    v = @set(v, 0x0F, !borrow)
+    v = @set(v, 0x0F, borrow)
     NEXT()
 }
 
@@ -321,7 +352,7 @@ fn _FX33(x) {
 
 // store registers to memory
 fn _FX55(x) {
-    for j in 0..x + 1{
+    for j in 0 : x + 1{
         @memset(i + j, v[j])
     }
     NEXT()
@@ -329,7 +360,7 @@ fn _FX55(x) {
 
 // load registers from memory
 fn _FX65(x) {
-    for j in 0..x + 1{
+    for j in 0 : x + 1{
         v = @set(v, j, @memget(i + j))
     }
     NEXT()
