@@ -49,6 +49,7 @@ fn cycle() {
         let key = @getkey()
         if key != none {
             @set(v, keypad_destination, key)
+            keypad_is_waiting = false
         }
     } else {
         let opcode = fetch(pc)
